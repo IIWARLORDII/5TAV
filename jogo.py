@@ -1,7 +1,6 @@
 import random
 import sqlite3
 
-# Inicializa o banco de dados
 def init_db():
     conn = sqlite3.connect('jogo.db')  # Nome do banco de dados alterado
     cursor = conn.cursor()
