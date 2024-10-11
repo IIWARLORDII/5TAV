@@ -1,7 +1,6 @@
 import random
 import sqlite3
 
-# Inicializa o banco de dados
 def init_db():
     conn = sqlite3.connect('jogo.db')
     cursor = conn.cursor()
@@ -78,7 +77,7 @@ def reiniciar_tabuleiro(conn):
     tabuleiro[12] = vitorias_j1
     tabuleiro[13] = empates
     tabuleiro[14] = vitorias_j2
-    tabuleiro[0] = 0  # Reinicia o contador de jogadas
+    tabuleiro[0] = 0
 
 def verificar_vitoria():
     combinacoes_vitoria = [
@@ -97,7 +96,7 @@ def verificar_vitoria():
 
 def marcar_posicao(posicao, jogador):
     tabuleiro[posicao] = 1 if jogador == "X" else -1
-    tabuleiro[0] += 1  # Incrementa o contador de jogadas
+    tabuleiro[0] += 1
 
 def exibir_tabuleiro():
     def converter_valor(valor):
@@ -116,7 +115,6 @@ def exibir_tabuleiro():
     print(f" {converter_valor(tabuleiro[7])} | {converter_valor(tabuleiro[8])} | {converter_valor(tabuleiro[9])} ")
     print("\n")
 
-# Implementa o algoritmo Minimax para o jogador Campeão
 def minimax(profundidade, jogador):
     vencedor = verificar_vitoria()
     if vencedor == "X":
