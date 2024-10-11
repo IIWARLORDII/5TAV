@@ -45,6 +45,39 @@ def exibir_resultados(conn):
         print(f"{resultado[0]:<7} | {resultado[1]:<6} | {resultado[2]:<9} | {resultado[3]:<9} | {resultado[4]:<13} | {resultado[5]:<7} | {resultado[6]:<13}")
     print("-" * 70)
 
+def exibir_estatisticas_finais(conn):
+    cursor = conn.cursor()
+    
+    # Somar o total de jogadas e contar o número de partidas
+    cursor.execute('''
+        SELECT COUNT(partida), SUM(jogada)
+        FROM resultados
+    ''')
+    stats = cursor.fetchone()
+
+    num_partidas = stats[0]
+    total_jogadas = stats[1]
+    
+    # Pegar os valores acumulados da última partida
+    cursor.execute('''
+        SELECT vitoria_jogador1, empate, vitoria_jogador2
+        FROM resultados ORDER BY partida DESC LIMIT 1
+    ''')
+    acumulados = cursor.fetchone()
+
+    media_jogadas = total_jogadas / num_partidas if num_partidas > 0 else 0
+    vitorias_j1 = acumulados[0]
+    empates = acumulados[1]
+    vitorias_j2 = acumulados[2]
+
+    print("\nEstatísticas Finais:")
+    print(f"Número de partidas jogadas: {num_partidas}")
+    print(f"Média de jogadas de todas as partidas: {media_jogadas:.2f}")
+    print(f"Quantidade de vitórias do jogador 1: {vitorias_j1}")
+    print(f"Quantidade de vitórias do jogador 2: {vitorias_j2}")
+    print(f"Quantidade de empates: {empates}")
+
+
 def obter_estatisticas(conn):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM resultados ORDER BY partida DESC LIMIT 1;')
@@ -159,6 +192,12 @@ def melhor_jogada_campeao(jogador):
                 melhor_jogada = posicao
     return melhor_jogada
 
+# Função para rodar múltiplas partidas
+def jogar_multiplas_partidas(conn, modo_jogo, num_partidas):
+    for _ in range(num_partidas):
+        modo_jogo(conn)
+    exibir_estatisticas_finais(conn)
+
 # Modos de jogo
 def jogo_jogador_vs_maquina(conn):
     reiniciar_tabuleiro(conn)
@@ -213,38 +252,28 @@ def jogo_maquina_vs_maquina(conn):
         while not jogada_valida(posicao1):
             posicao1 = random.randint(1, 9)
         marcar_posicao(posicao1, "X")
-        print(f"Máquina 1 jogou na posição {posicao1}.")
-        exibir_tabuleiro()
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
             tabuleiro[12] += 1 if vencedor == "X" else 0
             tabuleiro[14] += 1 if vencedor == "O" else 0
             armazenar_resultado(conn, tabuleiro)
-            print(f"O jogador {vencedor} venceu!")
-            return perguntar_reiniciar(conn)
-
+            return
         if tabuleiro[0] < 9:
             posicao2 = random.randint(1, 9)
             while not jogada_valida(posicao2):
                 posicao2 = random.randint(1, 9)
             marcar_posicao(posicao2, "O")
-            print(f"Máquina 2 jogou na posição {posicao2}.")
-            exibir_tabuleiro()
             vencedor = verificar_vitoria()
             if vencedor:
                 tabuleiro[11] = -1 if vencedor == "O" else 1
                 tabuleiro[12] += 1 if vencedor == "X" else 0
                 tabuleiro[14] += 1 if vencedor == "O" else 0
                 armazenar_resultado(conn, tabuleiro)
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar(conn)
-
-    print("Empate! Deu velha!")
+                return
     tabuleiro[11] = 0
     tabuleiro[13] += 1
     armazenar_resultado(conn, tabuleiro)
-    perguntar_reiniciar(conn)
 
 def jogo_humano_vs_campeao(conn):
     reiniciar_tabuleiro(conn)
@@ -272,7 +301,6 @@ def jogo_humano_vs_campeao(conn):
         if tabuleiro[0] < 9:
             posicao_campeao = melhor_jogada_campeao("O")
             marcar_posicao(posicao_campeao, "O")
-            print(f"O Campeão jogou na posição {posicao_campeao}.")
             vencedor = verificar_vitoria()
             if vencedor:
                 tabuleiro[11] = -1 if vencedor == "O" else 1
@@ -295,74 +323,54 @@ def jogo_campeao_vs_campeao(conn):
     while tabuleiro[0] < 9:
         posicao_campeao1 = melhor_jogada_campeao("X")
         marcar_posicao(posicao_campeao1, "X")
-        print(f"Campeão 1 jogou na posição {posicao_campeao1}.")
-        exibir_tabuleiro()
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
             tabuleiro[12] += 1 if vencedor == "X" else 0
             tabuleiro[14] += 1 if vencedor == "O" else 0
             armazenar_resultado(conn, tabuleiro)
-            print(f"O jogador {vencedor} venceu!")
-            return perguntar_reiniciar(conn)
-
+            return
         if tabuleiro[0] < 9:
             posicao_campeao2 = melhor_jogada_campeao("O")
             marcar_posicao(posicao_campeao2, "O")
-            print(f"Campeão 2 jogou na posição {posicao_campeao2}.")
-            exibir_tabuleiro()
             vencedor = verificar_vitoria()
             if vencedor:
                 tabuleiro[11] = -1 if vencedor == "O" else 1
                 tabuleiro[12] += 1 if vencedor == "X" else 0
                 tabuleiro[14] += 1 if vencedor == "O" else 0
                 armazenar_resultado(conn, tabuleiro)
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar(conn)
-
-    print("Empate! Deu velha!")
+                return
     tabuleiro[11] = 0
     tabuleiro[13] += 1
     armazenar_resultado(conn, tabuleiro)
-    perguntar_reiniciar(conn)
 
 def jogo_campeao_vs_maquina(conn):
     reiniciar_tabuleiro(conn)
     while tabuleiro[0] < 9:
         posicao_campeao = melhor_jogada_campeao("X")
         marcar_posicao(posicao_campeao, "X")
-        print(f"O Campeão jogou na posição {posicao_campeao}.")
-        exibir_tabuleiro()
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
             tabuleiro[12] += 1 if vencedor == "X" else 0
             tabuleiro[14] += 1 if vencedor == "O" else 0
             armazenar_resultado(conn, tabuleiro)
-            print(f"O jogador {vencedor} venceu!")
-            return perguntar_reiniciar(conn)
-
+            return
         if tabuleiro[0] < 9:
             posicao_maquina = random.randint(1, 9)
             while not jogada_valida(posicao_maquina):
                 posicao_maquina = random.randint(1, 9)
             marcar_posicao(posicao_maquina, "O")
-            print(f"A máquina jogou na posição {posicao_maquina}.")
-            exibir_tabuleiro()
             vencedor = verificar_vitoria()
             if vencedor:
                 tabuleiro[11] = -1 if vencedor == "O" else 1
                 tabuleiro[12] += 1 if vencedor == "X" else 0
                 tabuleiro[14] += 1 if vencedor == "O" else 0
                 armazenar_resultado(conn, tabuleiro)
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar(conn)
-
-    print("Empate! Deu velha!")
+                return
     tabuleiro[11] = 0
     tabuleiro[13] += 1
     armazenar_resultado(conn, tabuleiro)
-    perguntar_reiniciar(conn)
 
 def perguntar_reiniciar(conn):
     print("\nDeseja jogar novamente ou encerrar o jogo?")
@@ -380,14 +388,13 @@ def perguntar_reiniciar(conn):
         conn.close()
         exit()
 
-# Atualização do menu com as novas opções
 def iniciar_jogo(conn):
     print("\nEscolha uma opção:")
     print("1 - Jogador Humano vs Jogador Aleatório")
     print("2 - Jogador Humano vs Jogador Campeão")
-    print("3 - Jogador Aleatório vs Jogador Aleatório")
-    print("4 - Jogador Campeão vs Jogador Campeão")
-    print("5 - Jogador Campeão vs Jogador Aleatório")
+    print("3 - Jogador Aleatório vs Jogador Aleatório (múltiplas partidas)")
+    print("4 - Jogador Campeão vs Jogador Campeão (múltiplas partidas)")
+    print("5 - Jogador Campeão vs Jogador Aleatório (múltiplas partidas)")
     print("6 - Exibir Resultados")
     print("7 - Limpar Resultados")
 
@@ -404,11 +411,14 @@ def iniciar_jogo(conn):
     elif escolha == "2":
         jogo_humano_vs_campeao(conn)
     elif escolha == "3":
-        jogo_maquina_vs_maquina(conn)
+        num_partidas = int(input("Quantas partidas deseja jogar? "))
+        jogar_multiplas_partidas(conn, jogo_maquina_vs_maquina, num_partidas)
     elif escolha == "4":
-        jogo_campeao_vs_campeao(conn)
+        num_partidas = int(input("Quantas partidas deseja jogar? "))
+        jogar_multiplas_partidas(conn, jogo_campeao_vs_campeao, num_partidas)
     elif escolha == "5":
-        jogo_campeao_vs_maquina(conn)
+        num_partidas = int(input("Quantas partidas deseja jogar? "))
+        jogar_multiplas_partidas(conn, jogo_campeao_vs_maquina, num_partidas)
     elif escolha == "6":
         exibir_resultados(conn)
         perguntar_reiniciar(conn)
@@ -420,7 +430,6 @@ def iniciar_jogo(conn):
         conn.close()
         exit()
 
-# Menu principal com reinicialização do jogo
 def menu_principal():
     global tabuleiro
     tabuleiro = [0] * 15
