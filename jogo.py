@@ -148,7 +148,7 @@ def exibir_tabuleiro():
     print(f" {converter_valor(tabuleiro[7])} | {converter_valor(tabuleiro[8])} | {converter_valor(tabuleiro[9])} ")
     print("\n")
 
-def minimax(profundidade, jogador):
+def minimax_alpha_beta(profundidade, jogador, alpha, beta):
     vencedor = verificar_vitoria()
     if vencedor == "X":
         return 1  # Vitória para X
@@ -162,29 +162,38 @@ def minimax(profundidade, jogador):
         for posicao in range(1, 10):
             if jogada_valida(posicao):
                 marcar_posicao(posicao, "X")
-                valor = minimax(profundidade + 1, "O")
+                valor = minimax_alpha_beta(profundidade + 1, "O", alpha, beta)
                 tabuleiro[posicao] = 0
                 tabuleiro[0] -= 1
                 melhor_valor = max(melhor_valor, valor)
+                alpha = max(alpha, valor)
+                if beta <= alpha:
+                    break  # Poda beta
         return melhor_valor
     else:
         melhor_valor = float('inf')
         for posicao in range(1, 10):
             if jogada_valida(posicao):
                 marcar_posicao(posicao, "O")
-                valor = minimax(profundidade + 1, "X")
+                valor = minimax_alpha_beta(profundidade + 1, "X", alpha, beta)
                 tabuleiro[posicao] = 0
                 tabuleiro[0] -= 1
                 melhor_valor = min(melhor_valor, valor)
+                beta = min(beta, valor)
+                if beta <= alpha:
+                    break  # Poda alpha
         return melhor_valor
 
 def melhor_jogada_campeao(jogador):
     melhor_valor = -float('inf') if jogador == "X" else float('inf')
     melhor_jogada = None
+    alpha = -float('inf')
+    beta = float('inf')
+
     for posicao in range(1, 10):
         if jogada_valida(posicao):
             marcar_posicao(posicao, jogador)
-            valor = minimax(0, "O" if jogador == "X" else "X")
+            valor = minimax_alpha_beta(0, "O" if jogador == "X" else "X", alpha, beta)
             tabuleiro[posicao] = 0
             tabuleiro[0] -= 1
             if (jogador == "X" and valor > melhor_valor) or (jogador == "O" and valor < melhor_valor):
