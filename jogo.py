@@ -1,5 +1,6 @@
 import random
 import time
+from collections import Counter
 
 # Estatísticas
 def exibir_conhecimento_ia():
@@ -149,6 +150,38 @@ def jogada_campeao(jogador):
                 posicao_campeao = random.randint(1, 9)
 
     marcar_posicao(posicao_campeao,jogador)
+
+def antecipar_vitoria_bloqueio_campeao(jogador):
+    combinacoes_vitoria = [
+        [1, 2, 3], [4, 5, 6], [7, 8, 9],    # Linhas
+        [1, 4, 7], [2, 5, 8], [3, 6, 9],    # Colunas
+        [1, 5, 9], [3, 5, 7]                # Diagonais
+    ]
+    posicoes_ataque = []
+    posicoes_defesa = []
+    sequencia = 1 if jogador == "X" else -1
+    sequencia_adversario = -1 if jogador == "X" else 1
+    for combinacao in combinacoes_vitoria:
+        soma = sum(tabuleiro[pos] for pos in combinacao)
+        if soma == sequencia:
+            for pos in combinacao:
+                if tabuleiro[pos] == 0:
+                    posicoes_ataque.append(pos)
+    for combinacao in combinacoes_vitoria:
+        soma = sum(tabuleiro[pos] for pos in combinacao)
+        if soma == sequencia_adversario:
+            for pos in combinacao:
+                if tabuleiro[pos] == 0:
+                    posicoes_defesa.append(pos)
+    ataque_mais_comum = Counter(posicoes_ataque).most_common(1)
+    defesa_mais_comum = Counter(posicoes_defesa).most_common(1)
+    if ataque_mais_comum and defesa_mais_comum:
+        if ataque_mais_comum[0][0] >= defesa_mais_comum[0][0]:
+            pos = ataque_mais_comum[0][0]
+        else:
+            pos = defesa_mais_comum[0][0]
+        return pos
+    return None  
 
 def verificar_jogada_campeao(jogador):
     combinacoes_vitoria = [
