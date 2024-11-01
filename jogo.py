@@ -28,6 +28,7 @@ def exibir_estatisticas_finais():
 
     gerar_relatorio()
     zerar_tabuleiro()
+    resultados.clear()
 
 def gerar_relatorio():
     nome_arquivo = "relatorio.csv"
@@ -246,7 +247,11 @@ def jogada_inteligente(jogador):
     jogadas_validas = []
     jogada_ia = None
 
-    jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
+    if (modo_jogado == jogo_inteligente_vs_inteligente):
+        jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
+    else:
+        jogadas_jogador = jogadas_inteligentes
+        
     for jogada in conhecimento_ia:
         if jogada[:10] == tabuleiro[:10]:
             if jogada[11] > maior_pontuacao:
@@ -283,7 +288,11 @@ def jogada_inteligente(jogador):
     return posicao_inteligente
 
 def pontuar_jogada_inteligente(jogador, ponto):
-    jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
+    if (modo_jogado == jogo_inteligente_vs_inteligente):
+        jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
+    else:
+        jogadas_jogador = jogadas_inteligentes
+        
     for jogada in jogadas_jogador:
         for base in conhecimento_ia:
             if jogada[:11] == base[:11]:
@@ -395,13 +404,13 @@ def jogo_humano_vs_inteligente():
                 ponto = 1
                 print(f"Vitória do Jogador 2!")
             resultados.append(tabuleiro[:])
-            pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+            pontuar_jogada_inteligente(jogador, ponto)
             return perguntar_reiniciar()
     tabuleiro[11] = 0
     tabuleiro[13] += 1
     exibir_tabuleiro(tabuleiro)
     print("Empate! Deu velha!")
-    pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+    pontuar_jogada_inteligente(jogador, ponto)
     resultados.append(tabuleiro[:])
     perguntar_reiniciar()
 
@@ -528,8 +537,8 @@ def jogo_inteligente_vs_aleatorio():
                 ponto = -1
             resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
-            return pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
-    pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+            return pontuar_jogada_inteligente(jogador, ponto)
+    pontuar_jogada_inteligente(jogador, ponto)
     tabuleiro[11] = 0
     tabuleiro[13] += 1
     resultados.append(tabuleiro[:])
@@ -557,8 +566,8 @@ def jogo_inteligente_vs_campeao():
                 ponto = -1
             resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
-            return pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
-    pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+            return pontuar_jogada_inteligente(jogador, ponto)
+    pontuar_jogada_inteligente(jogador, ponto)
     tabuleiro[11] = 0
     tabuleiro[13] += 1
     resultados.append(tabuleiro[:])
@@ -582,7 +591,8 @@ def perguntar_reiniciar():
         exit()
 
 def jogar_multiplas_partidas(modo_jogo, num_partidas): # <====================
-    global total_jogadas, tempo_inicio, escolha
+    global total_jogadas, tempo_inicio, escolha, modo_jogado
+    modo_jogado = modo_jogo
     total_jogadas = 0
     tempo_inicio = time.time()
     escolha = None
