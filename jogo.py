@@ -1,5 +1,6 @@
 import random
 import time
+import csv
 from collections import Counter
 
 # Estatísticas
@@ -7,6 +8,11 @@ def exibir_conhecimento_ia():
     conhecimento_ia.sort()
     for vetor in enumerate(conhecimento_ia):
         print(f"{vetor}")
+
+def exibir_jogadas(jogadas):
+    for jogada in jogadas[-tabuleiro[0]:]:
+        print(f"Partida: {tabuleiro[10]}")
+        exibir_tabuleiro(jogada)
 
 def exibir_jogadas_inteligentes():
     for vetor in enumerate(jogadas_inteligentes):
@@ -29,20 +35,71 @@ def exibir_estatisticas_finais(): # <======
     print(f"Quantidade de empates: {velhas} ({((velhas / num_partidas) * 100):.2f}%)")
     print(f"Tempo para resultados finais: {tempo_final:.2f} segundos")
 
-    zerar_tabuleiro(tabuleiro)
+    # for vetor in enumerate(resultados):
+    #     print(f"{vetor}")
+    gerar_relatorio()
+    zerar_tabuleiro()
+
+def gerar_relatorio():
+    # Nome do arquivo CSV
+    nome_arquivo = "relatorio.csv"
+
+    # Definindo os nomes das colunas
+    colunas = ["Jogadas", "Tabuleiro", "Partida", "Resultado", "Vitorias J1", "Velhas", "Vitorias J2"]
+
+    # Criando o arquivo CSV e escrevendo os dados
+    with open(nome_arquivo, mode="w", newline="") as arquivo_csv:
+        escritor_csv = csv.writer(arquivo_csv, delimiter=";")
+
+        # Escrever cabeçalho
+        escritor_csv.writerow(colunas)
+
+        # Escrever cada vetor na lista como uma linha no CSV
+        for resultado in resultados:
+            linha = [
+                resultado[0],                      # Jogadas
+                ",".join(map(str, resultado[1:10])),  # Tabuleiro (posição 1 até 9, separados por vírgula)
+                resultado[10],                     # Partida
+                resultado[11],                     # Resultado
+                resultado[12],                     # Vitorias J1
+                resultado[13],                     # Velhas
+                resultado[14]                      # Vitorias J2
+            ]
+            escritor_csv.writerow(linha)
+
+    print(f"Arquivo '{nome_arquivo}' criado com sucesso!")
+
+    # # Transformar a lista em um DataFrame, criando colunas com os valores correspondentes
+    # df = pd.DataFrame({
+    #     "Jogadas": [resultado[0] for resultado in resultados],
+    #     "Tabuleiro": [",".join(map(str, resultado[1:10])) for resultado in resultados],  # Combina posições 1 a 9 em uma string
+    #     "Partida": [resultado[10] for resultado in resultados],
+    #     "Resultado": [resultado[11] for resultado in resultados],
+    #     "Vitorias J1": [resultado[12] for resultado in resultados],
+    #     "Velhas": [resultado[13] for resultado in resultados],
+    #     "Vitorias J2": [resultado[14] for resultado in resultados]
+    # })
+
+    # # Salvar no arquivo CSV
+    # nome_arquivo = "realtorio.csv"
+    # df.to_csv(nome_arquivo, index=False, sep=";")
+
+    # print(f"Arquivo '{nome_arquivo}' criado com sucesso!")
 
 # Tabuleiro
-def zerar_tabuleiro(tabuleiro):
+def zerar_tabuleiro():
     for i in range(15):
         tabuleiro[i] = 0
 
 def jogada_valida(posicao):
     return 1 <= posicao <= 9 and tabuleiro[posicao] == 0
 
-def verificar_posicao(jogador): # <====================
+def verificar_posicoes(jogador): # <====================
+    posicoes = []
     for pos in range(1,10):
         if jogador == converter_valor(tabuleiro[pos]):
-            return pos
+            posicoes.append(pos)
+    return posicoes
 
 def reiniciar_tabuleiro():
     for i in range(10):
@@ -76,7 +133,7 @@ def converter_valor(valor):
         else:
             return " "
 
-def exibir_tabuleiro():
+def exibir_tabuleiro(tabuleiro):
     print("\n")
     print(f" {converter_valor(tabuleiro[1])} | {converter_valor(tabuleiro[2])} | {converter_valor(tabuleiro[3])} ")
     print("---+---+---")
@@ -86,6 +143,20 @@ def exibir_tabuleiro():
     print("\n")
 
 # Jogadas
+def jogada_humano(jogador):
+    posicao_humano = None
+    while not posicao_humano:
+        try:
+            posicao_humano = int(input("Escolha uma posição (1-9) para jogar: "))
+            if not jogada_valida(posicao_humano):
+                print("Posição inválida! Tente novamente.")
+                continue
+            marcar_posicao(posicao_humano, jogador)
+            return posicao_humano
+        except ValueError:
+            print("Entrada inválida. Digite um número de 1 a 9.")
+            continue
+
 def jogada_aleatorio(jogador):
     posicao_aleatorio = random.randint(1, 9)
     while not jogada_valida(posicao_aleatorio):
@@ -95,50 +166,55 @@ def jogada_aleatorio(jogador):
     return posicao_aleatorio
 
 def jogada_campeao(jogador):
-    posicao_campeao = ""
     quinas = [1, 3, 7, 9]
-    bordas = [2, 4, 6, 8]
     meio = 5
-    jogadas_validas_borda = [[1, 3, 5, 8], [1, 5, 6, 7], [3, 4, 5, 9], [2, 5, 7, 9]]
     adversario = "O" if jogador == "X" else "X"
 
+    # print(f"\nJogadas: {tabuleiro[0]}\nJogador: {jogador} Adversário: {adversario}") # =======================
+    # exibir_tabuleiro(tabuleiro) # ===========================
+
     if tabuleiro[0] == 0:
-        posicao_campeao = random.randint(1, 9)
+        posicao_campeao = 1
     elif tabuleiro[0] == 1:
-        if verificar_posicao(adversario) == meio:
-            posicao_campeao = random.choice(quinas)
+        if verificar_posicoes(adversario)[0] == meio:
+            posicao_campeao = 1
         else:
             posicao_campeao = meio
     elif tabuleiro[0] == 2:
-        if verificar_posicao(jogador) in quinas and verificar_posicao(adversario) in quinas:
-            posicao_campeao = random.choice(quinas)
-            while not jogada_valida(posicao_campeao):
-                posicao_campeao = random.choice(quinas)
-        elif verificar_posicao(jogador) in quinas:
-            if not verificar_posicao(adversario) == meio:
-                posicao_campeao = meio
-            else:
-                posicao_campeao = random.choice(verificar_jogada_campeao(jogador))
-        elif verificar_posicao(jogador) == meio and verificar_posicao(adversario) in bordas:
-            if verificar_posicao(adversario) == 4 or verificar_posicao(adversario) == 6:
-                posicao_campeao = verificar_posicao(adversario) - 3
-            elif verificar_posicao(adversario) == 2 or verificar_posicao(adversario) == 8:
-                posicao_campeao = verificar_posicao(adversario) - 1
-        elif verificar_posicao(jogador) == meio and verificar_posicao(adversario) in quinas:
-            posicao_campeao = random.choice(verificar_jogada_campeao(jogador))
-            while posicao_campeao not in quinas:
-                posicao_campeao = random.choice(verificar_jogada_campeao(jogador))
-        elif jogador == any(converter_valor(tabuleiro[i]) for i in bordas) and tabuleiro[verificar_posicao(adversario)] not in jogadas_validas_borda[verificar_posicao(jogador) / 2]:
-            posicao_campeao = meio
+        if verificar_posicoes(adversario)[0] == meio:
+            posicao_campeao = 9
+        elif verificar_posicoes(adversario)[0] in [4, 7]:
+            posicao_campeao = 3
         else:
-            if jogada_valida(meio):
-                posicao_campeao = meio
-            elif verificar_jogada_campeao(jogador):
-                posicao_campeao = random.choice(verificar_jogada_campeao(jogador))
+            posicao_campeao = 7
+    elif tabuleiro[0] == 3:
+        if verificar_posicoes(jogador)[0] == 1:
+            if verificar_vitoria_bloqueio_campeao(jogador):
+                posicao_campeao = verificar_vitoria_bloqueio_campeao(jogador)
             else:
-                posicao_campeao = random.randint(1, 9)
-                while not jogada_valida(posicao_campeao):
-                    posicao_campeao = random.randint(1, 9)
+                posicao_campeao = 3
+        else:
+            if verificar_vitoria_bloqueio_campeao(jogador):
+                posicao_campeao = verificar_vitoria_bloqueio_campeao(jogador)
+            else:
+                posicoes_adversario = verificar_posicoes(adversario)
+                if any(pos in quinas for pos in posicoes_adversario):
+                    if all(pos in quinas for pos in posicoes_adversario):
+                        posicao_campeao = 4
+                    else:
+                        if posicoes_adversario in [[1,6],[1,8]]:
+                            posicao_campeao = 9
+                        elif posicoes_adversario in [[3,4],[3,8]]:
+                            posicao_campeao = 7
+                        elif posicoes_adversario in [[2,7],[6,7]]:
+                            posicao_campeao = 3
+                        else:
+                            posicao_campeao = 1
+                else:
+                    if posicoes_adversario in [[4,8],[6,8]]:
+                        posicao_campeao = 7
+                    else:
+                        posicao_campeao = 1            
     else:
         if verificar_vitoria_bloqueio_campeao(jogador):
             posicao_campeao = verificar_vitoria_bloqueio_campeao(jogador)
@@ -150,38 +226,9 @@ def jogada_campeao(jogador):
                 posicao_campeao = random.randint(1, 9)
 
     marcar_posicao(posicao_campeao,jogador)
-
-def antecipar_vitoria_bloqueio_campeao(jogador):
-    combinacoes_vitoria = [
-        [1, 2, 3], [4, 5, 6], [7, 8, 9],    # Linhas
-        [1, 4, 7], [2, 5, 8], [3, 6, 9],    # Colunas
-        [1, 5, 9], [3, 5, 7]                # Diagonais
-    ]
-    posicoes_ataque = []
-    posicoes_defesa = []
-    sequencia = 1 if jogador == "X" else -1
-    sequencia_adversario = -1 if jogador == "X" else 1
-    for combinacao in combinacoes_vitoria:
-        soma = sum(tabuleiro[pos] for pos in combinacao)
-        if soma == sequencia:
-            for pos in combinacao:
-                if tabuleiro[pos] == 0:
-                    posicoes_ataque.append(pos)
-    for combinacao in combinacoes_vitoria:
-        soma = sum(tabuleiro[pos] for pos in combinacao)
-        if soma == sequencia_adversario:
-            for pos in combinacao:
-                if tabuleiro[pos] == 0:
-                    posicoes_defesa.append(pos)
-    ataque_mais_comum = Counter(posicoes_ataque).most_common(1)
-    defesa_mais_comum = Counter(posicoes_defesa).most_common(1)
-    if ataque_mais_comum and defesa_mais_comum:
-        if ataque_mais_comum[0][0] >= defesa_mais_comum[0][0]:
-            pos = ataque_mais_comum[0][0]
-        else:
-            pos = defesa_mais_comum[0][0]
-        return pos
-    return None  
+    # input("Continua?") # =========================
+    # print(f"Jogador {jogador} jogou na posição: {posicao_campeao}") # ======================
+    return posicao_campeao
 
 def verificar_jogada_campeao(jogador):
     combinacoes_vitoria = [
@@ -221,185 +268,223 @@ def verificar_vitoria_bloqueio_campeao(jogador):
                     return pos
     return None
 
-def jogada_inteligente(jogador):
-    maior_pontuacao = -float('inf')
-    jogada_ia = None
-    posicao_inteligente = None
-    jogadas_validas = []
+def antecipar_vitoria_bloqueio_campeao(jogador):
+    combinacoes_vitoria = [
+        [1, 2, 3], [4, 5, 6], [7, 8, 9],    # Linhas
+        [1, 4, 7], [2, 5, 8], [3, 6, 9],    # Colunas
+        [1, 5, 9], [3, 5, 7]                # Diagonais
+    ]
+    posicoes_ataque = []
+    posicoes_defesa = []
+    sequencia = 1 if jogador == "X" else -1
+    sequencia_adversario = sequencia * -1
+    for combinacao in combinacoes_vitoria:
+        soma = sum(tabuleiro[pos] for pos in combinacao)
+        if soma == sequencia:
+            for pos in combinacao:
+                if tabuleiro[pos] == 0:
+                    posicoes_ataque.append(pos)
+    for combinacao in combinacoes_vitoria:
+        soma = sum(tabuleiro[pos] for pos in combinacao)
+        if soma == sequencia_adversario:
+            for pos in combinacao:
+                if tabuleiro[pos] == 0:
+                    posicoes_defesa.append(pos)
+    ataque_mais_comum = Counter(posicoes_ataque).most_common(1)
+    defesa_mais_comum = [[0]]
+    # defesa_mais_comum = Counter(posicoes_defesa).most_common(1)
+    if ataque_mais_comum and defesa_mais_comum:
+        if ataque_mais_comum[0][0] >= defesa_mais_comum[0][0]:
+            pos = ataque_mais_comum[0][0]
+        else:
+            pos = defesa_mais_comum[0][0]
+        return pos
+    return None 
 
+def jogada_inteligente(jogador):
+    maior_pontuacao = -2**31 # float('inf') ou -2**31
+    jogadas_validas = []
+    jogada_ia = None
+    # posicao_inteligente = None
+
+    jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
     for jogada in conhecimento_ia:
         if jogada[:10] == tabuleiro[:10]:
             if jogada[11] > maior_pontuacao:
-                jogadas_validas.clear()
+                # print(f"Maior rank achado em: {jogada}")
                 maior_pontuacao = jogada[11]
+                jogadas_validas.clear()
                 jogadas_validas.append(jogada)
             elif jogada[11] == maior_pontuacao:
+                # print(f"Mais um rank alto achado em: {jogada}")
                 jogadas_validas.append(jogada)
     if jogadas_validas:
+        # print(f"Tem na base")
         if maior_pontuacao >= 0:
+            # print(f"Maior rank >= 0")
             jogada_ia = random.choice(jogadas_validas)
-            posicao_inteligente = jogada_ia[10]
-            marcar_posicao(posicao_inteligente,jogador)
         else:
-            jogadas_validas.clear()
-            for jogada in conhecimento_ia:
-                if jogada[:10] == tabuleiro[:10]:
-                    jogadas_validas.append(jogada[10])
-            jogada_ia = tabuleiro[:12]
-            jogada_ia[10] = jogada_aleatorio(jogador)
-            while jogada_ia[10] in jogadas_validas:
-                jogada_ia[10] = jogada_aleatorio(jogador)
-            posicao_inteligente = jogada_ia[10]
-            jogada_ia[11] = 0
-            conhecimento_ia.append(jogada_ia) 
+            # print(f"Maior rank < 0")
+            posicoes_validas = [pos[10] for pos in conhecimento_ia if pos[:10] == tabuleiro[:10]]
+            jogadas_possiveis = []
+            for i in range(1,10):
+                if jogada_valida(i) and i not in posicoes_validas:
+                    jogada_ia = tabuleiro[:12]
+                    jogada_ia[10] = i
+                    jogada_ia[11] = 0
+                    jogadas_possiveis.append(jogada_ia[:])
+            if jogadas_possiveis:
+                # print(f"Tem mais jogadas pra base")
+                jogada_ia = random.choice(jogadas_possiveis)
+                conhecimento_ia.append(jogada_ia[:])
+            else:
+                # print(f"Não tem mais jogadas pra base")
+                jogada_ia = random.choice(jogadas_validas)
+        posicao_inteligente = jogada_ia[10]
+        marcar_posicao(posicao_inteligente,jogador)
     else:
+        # print(f"Não tem na base")
         jogada_ia = tabuleiro[:12]
         posicao_inteligente = jogada_ia[10] = jogada_aleatorio(jogador)
         jogada_ia[11] = 0
-        conhecimento_ia.append(jogada_ia)
-        
-    jogadas_inteligentes.append(jogada_ia)
+        conhecimento_ia.append(jogada_ia[:])
+        # exibir_conhecimento_ia()
+    jogadas_jogador.append(jogada_ia[:])
     return posicao_inteligente
 
-def pontuar_jogada_inteligente(ponto):
-    for jogada in jogadas_inteligentes:
+def pontuar_jogada_inteligente(jogador, ponto):
+    jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
+    for jogada in jogadas_jogador:
         for base in conhecimento_ia:
             if jogada[:11] == base[:11]:
                 base[11] += ponto
                 break
-
-    jogadas_inteligentes.clear()
+    jogadas_jogador.clear()
 
 # Modos de jogo
 def jogo_humano_vs_aleatorio():
-    reiniciar_tabuleiro()
+    zerar_tabuleiro()
+
+    print("Quem começa primeiro Humano ou Aleatório")
+    escolha = input("1 - Humano ou 2 - Aleatório: ")
+    while escolha not in ["1", "2"]:
+        print("Opção inválida! Escolha novamente:")
+        escolha = input("1 - Humano ou 2 - Aleatório: ")
+    # jogador1 = "Humano" if escolha == 1 else "Aleatório"
+    # jogador2 = "Aleatório" if escolha == 1 else "Humano"
+
+    exibir_tabuleiro(tabuleiro)
     while tabuleiro[0] < 9:
-        exibir_tabuleiro()
-        try:
-            posicao = int(input("Escolha uma posição (1-9) para jogar: "))
-            if not jogada_valida(posicao):
-                print("Posição inválida! Tente novamente.")
-                continue
-            marcar_posicao(posicao, "X")
-            vencedor = verificar_vitoria()
-            if vencedor:
-                tabuleiro[11] = 1 if vencedor == "X" else -1
-                tabuleiro[12] += 1 if vencedor == "X" else 0
-                tabuleiro[14] += 1 if vencedor == "O" else 0
-                exibir_tabuleiro()
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar()
-        except ValueError:
-            print("Entrada inválida. Digite um número de 1 a 9.")
-            continue
-
-        if tabuleiro[0] < 9:
-            posicao_aleatorio = random.randint(1, 9)
-            while not jogada_valida(posicao_aleatorio):
-                posicao_aleatorio = random.randint(1, 9)
-            marcar_posicao(posicao_aleatorio, "O")
-            print(f"A máquina jogou na posição {posicao_aleatorio}.")
-            vencedor = verificar_vitoria()
-            if vencedor:
-                tabuleiro[11] = -1 if vencedor == "O" else 1
-                tabuleiro[12] += 1 if vencedor == "X" else 0
-                tabuleiro[14] += 1 if vencedor == "O" else 0
-                exibir_tabuleiro()
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar()
-
+        
+        jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
+        if (escolha == "1" and jogador == "X") or (escolha == "2" and jogador == "O"):
+            jogada_humano(jogador)
+        else:
+            posicao_aleatorio = jogada_aleatorio(jogador)
+            print(f"Jogador Aleatório jogou na posição {posicao_aleatorio}")
+        exibir_tabuleiro(tabuleiro)
+        vencedor = verificar_vitoria()
+        if vencedor:
+            tabuleiro[11] = 1 if vencedor == "X" else -1
+            if vencedor == "X":
+                tabuleiro[12] += 1
+                print(f"Vitória do Jogador 1!")
+            else:
+                tabuleiro[14] += 1
+                print(f"Vitória do Jogador 2!")
+            resultados.append(tabuleiro[:])
+            return perguntar_reiniciar()
     tabuleiro[11] = 0
     tabuleiro[13] += 1
-    exibir_tabuleiro()
+    exibir_tabuleiro(tabuleiro)
     print("Empate! Deu velha!")
+    resultados.append(tabuleiro[:])
     perguntar_reiniciar()
 
 def jogo_humano_vs_campeao():
-    reiniciar_tabuleiro()
+    zerar_tabuleiro()
+
+    print("Quem começa primeiro Humano ou Campeão")
+    escolha = input("1 - Humano ou 2 - Campeão: ")
+    while escolha not in ["1", "2"]:
+        print("Opção inválida! Escolha novamente:")
+        escolha = input("1 - Humano ou 2 - Campeão: ")
+
+    exibir_tabuleiro(tabuleiro)
     while tabuleiro[0] < 9:
-        exibir_tabuleiro()
-        try:
-            posicao = int(input("Escolha uma posição (1-9) para jogar: "))
-            if not jogada_valida(posicao):
-                print("Posição inválida! Tente novamente.")
-                continue
-            marcar_posicao(posicao, "X")
-            vencedor = verificar_vitoria()
-            if vencedor:
-                tabuleiro[11] = 1 if vencedor == "X" else -1
-                tabuleiro[12] += 1 if vencedor == "X" else 0
-                tabuleiro[14] += 1 if vencedor == "O" else 0
-                exibir_tabuleiro()
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar()
-        except ValueError:
-            print("Entrada inválida. Digite um número de 1 a 9.")
-            continue
-
-        if tabuleiro[0] < 9:
-            posicao_campeao = melhor_jogada_campeao("O")
-            marcar_posicao(posicao_campeao, "O")
-            vencedor = verificar_vitoria()
-            if vencedor:
-                tabuleiro[11] = -1 if vencedor == "O" else 1
-                tabuleiro[12] += 1 if vencedor == "X" else 0
-                tabuleiro[14] += 1 if vencedor == "O" else 0
-                exibir_tabuleiro()
-                print(f"O jogador {vencedor} venceu!")
-                return perguntar_reiniciar()
-
+        
+        jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
+        if (escolha == "1" and jogador == "X") or (escolha == "2" and jogador == "O"):
+            jogada_humano(jogador)
+        else:
+            posicao_campeao = jogada_campeao(jogador)
+            print(f"Jogador Campeão jogou na posição {posicao_campeao}")
+        exibir_tabuleiro(tabuleiro)
+        vencedor = verificar_vitoria()
+        if vencedor:
+            tabuleiro[11] = 1 if vencedor == "X" else -1
+            if vencedor == "X":
+                tabuleiro[12] += 1
+                print(f"Vitória do Jogador 1!")
+            else:
+                tabuleiro[14] += 1
+                print(f"Vitória do Jogador 2!")
+            resultados.append(tabuleiro[:])
+            return perguntar_reiniciar()
     tabuleiro[11] = 0
     tabuleiro[13] += 1
-    exibir_tabuleiro()
+    exibir_tabuleiro(tabuleiro)
     print("Empate! Deu velha!")
+    resultados.append(tabuleiro[:])
     perguntar_reiniciar()
 
 def jogo_humano_vs_inteligente():
-    reiniciar_tabuleiro()
+    ponto = 0
+    zerar_tabuleiro()
+
+    print("Quem começa primeiro Humano ou Inteligente")
+    escolha = input("1 - Humano ou 2 - Inteligente: ")
+    while escolha not in ["1", "2"]:
+        print("Opção inválida! Escolha novamente:")
+        escolha = input("1 - Humano ou 2 - Inteligente: ")
+
+    exibir_tabuleiro(tabuleiro)
     while tabuleiro[0] < 9:
-        exibir_tabuleiro()
-        try:
-            posicao = int(input("Escolha uma posição (1-9) para jogar: "))
-            if not jogada_valida(posicao):
-                print("Posição inválida! Tente novamente.")
-                continue
-            marcar_posicao(posicao, "X")
-            vencedor = verificar_vitoria()
-            if vencedor:
-                tabuleiro[11] = 1 if vencedor == "X" else -1
-                tabuleiro[12] += 1 if vencedor == "X" else 0
-                tabuleiro[14] += 1 if vencedor == "O" else 0
-                exibir_tabuleiro()
-                print(f"O jogador {vencedor} venceu!")
-                pontuar_jogada_inteligente(-1)
-                return perguntar_reiniciar()
-        except ValueError:
-            print("Entrada inválida. Digite um número de 1 a 9.")
-            continue
-
-        if tabuleiro[0] < 9:
-            posicao_inteligente = jogada_inteligente("O")
-            print(f"O Jogador Inteligente jogou na posição {posicao_inteligente}.")
-            exibir_jogadas_inteligentes()
-            vencedor = verificar_vitoria()
-            if vencedor:
-                tabuleiro[11] = -1 if vencedor == "O" else 1
-                tabuleiro[12] += 1 if vencedor == "X" else 0
-                tabuleiro[14] += 1 if vencedor == "O" else 0
-                exibir_tabuleiro()
-                print(f"O jogador {vencedor} venceu!")
-                pontuar_jogada_inteligente(1)
-                return perguntar_reiniciar()
-
+        # input("Continua?")
+        jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
+        if (escolha == "1" and jogador == "X") or (escolha == "2" and jogador == "O"):
+            jogada_humano(jogador)
+        else:
+            posicao_inteligente = jogada_inteligente(jogador, jogadas_inteligentes)
+            print(f"Jogador Inteligente jogou na posição {posicao_inteligente}")
+        exibir_tabuleiro(tabuleiro)
+        vencedor = verificar_vitoria()
+        if vencedor:
+            tabuleiro[11] = 1 if vencedor == "X" else -1
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                tabuleiro[12] += 1
+                ponto = -1
+                print(f"Vitória do Jogador 1!")
+            else:
+                tabuleiro[14] += 1
+                ponto = 1
+                print(f"Vitória do Jogador 2!")
+            resultados.append(tabuleiro[:])
+            # exibir_jogadas_inteligentes()
+            pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+            # exibir_jogadas_inteligentes()
+            return perguntar_reiniciar()
     tabuleiro[11] = 0
     tabuleiro[13] += 1
-    exibir_tabuleiro()
+    exibir_tabuleiro(tabuleiro)
     print("Empate! Deu velha!")
+    pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+    resultados.append(tabuleiro[:])
     perguntar_reiniciar()
 
 def jogo_aleatorio_vs_aleatorio():
-    reiniciar_tabuleiro()
     global total_jogadas
+    reiniciar_tabuleiro()
 
     while tabuleiro[0] < 9:
         jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
@@ -433,19 +518,50 @@ def jogo_campeao_vs_campeao():
                 tabuleiro[12] += 1
             else:
                 tabuleiro[14] += 1
-            resultados.append(tabuleiro)
+            resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
             return
     tabuleiro[11] = 0
     tabuleiro[13] += 1
-    resultados.append(tabuleiro)
+    resultados.append(tabuleiro[:])
     total_jogadas += tabuleiro[0]
 
-# def jogo_inteligente_vs_inteligente():
+def jogo_inteligente_vs_inteligente():
+    reiniciar_tabuleiro()
+    global total_jogadas, jogadas_inteligentes2
+    jogadas_inteligentes2 = []
+    ponto = 0
+    ponto2 = 0
+
+    while tabuleiro[0] < 9:
+        jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
+        jogada_inteligente(jogador)
+        vencedor = verificar_vitoria()
+        if vencedor:
+            tabuleiro[11] = 1 if vencedor == "X" else -1
+            if vencedor == "X":
+                tabuleiro[12] += 1
+                ponto = 1
+                ponto2 = -1
+            else:
+                tabuleiro[14] += 1
+                ponto = -1
+                ponto2 = 1
+            resultados.append(tabuleiro[:])
+            total_jogadas += tabuleiro[0]
+            pontuar_jogada_inteligente("X", ponto)
+            pontuar_jogada_inteligente("O", ponto2)
+            return
+    pontuar_jogada_inteligente("X", ponto)
+    pontuar_jogada_inteligente("O", ponto2)
+    tabuleiro[11] = 0
+    tabuleiro[13] += 1
+    resultados.append(tabuleiro[:])
+    total_jogadas += tabuleiro[0]
 
 def jogo_campeao_vs_aleatorio():
     reiniciar_tabuleiro()
-    global total_jogadas, escolha, test
+    global total_jogadas
 
     while tabuleiro[0] < 9:
         jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
@@ -454,63 +570,85 @@ def jogo_campeao_vs_aleatorio():
         else:
             jogada_aleatorio(jogador)
         vencedor = verificar_vitoria()
-        exibir_tabuleiro()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
             if vencedor == "X":
                 tabuleiro[12] += 1
-                test = 1
             else:
                 tabuleiro[14] += 1
-            resultados.append(tabuleiro)
+            resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
             return
     tabuleiro[11] = 0
     tabuleiro[13] += 1
-    resultados.append(tabuleiro)
+    resultados.append(tabuleiro[:])
     total_jogadas += tabuleiro[0]
 
 def jogo_inteligente_vs_aleatorio():
     reiniciar_tabuleiro()
     global total_jogadas, escolha
+    jogadas = [] # =============
     ponto = 0
 
     while tabuleiro[0] < 9:
         jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
         if (escolha == "1" and jogador == "X") or (escolha == "2" and jogador == "O"):
-            jogada_inteligente(jogador)
+            jogada_inteligente(jogador, jogadas_inteligentes)
         else:
             jogada_aleatorio(jogador)
+        # jogadas.append(tabuleiro[:10])
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
-            if vencedor == "X":
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
                 tabuleiro[12] += 1
-                if escolha == "1":
-                    ponto = 1
-                else:
-                    ponto = -1
-                    # exibir_jogadas_inteligentes()
-                    # exibir_tabuleiro()
+                ponto = 1
             else:
                 tabuleiro[14] += 1
-                if escolha == "1":
-                    ponto = -1
-                    # exibir_jogadas_inteligentes()
-                    # exibir_tabuleiro()
-                else:
-                    ponto = 1
-            resultados.append(tabuleiro)
+                ponto = -1
+                # exibir_jogadas(jogadas) # ===========
+                # input("Continuar?")
+            resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
-            pontuar_jogada_inteligente(ponto)
-            return
-    pontuar_jogada_inteligente(ponto)
+            return pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+    pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
     tabuleiro[11] = 0
     tabuleiro[13] += 1
-    resultados.append(tabuleiro)
+    resultados.append(tabuleiro[:])
     total_jogadas += tabuleiro[0]
 
-# def jogo_inteligente_vs_campeao():
+def jogo_inteligente_vs_campeao():
+    reiniciar_tabuleiro()
+    global total_jogadas, escolha
+    jogadas = [] # =============
+    ponto = 0
+
+    while tabuleiro[0] < 9:
+        jogador = "X" if tabuleiro[0] % 2 == 0 else "O"
+        if (escolha == "1" and jogador == "X") or (escolha == "2" and jogador == "O"):
+            jogada_inteligente(jogador, jogadas_inteligentes)
+        else:
+            jogada_campeao(jogador)
+        # jogadas.append(tabuleiro[:10])
+        vencedor = verificar_vitoria()
+        if vencedor:
+            tabuleiro[11] = 1 if vencedor == "X" else -1
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                tabuleiro[12] += 1
+                ponto = 1
+            else:
+                tabuleiro[14] += 1
+                ponto = -1
+                # exibir_jogadas(jogadas) # ===========
+                # input("Continuar?")
+            resultados.append(tabuleiro[:])
+            total_jogadas += tabuleiro[0]
+            return pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+    pontuar_jogada_inteligente(ponto, jogadas_inteligentes)
+    tabuleiro[11] = 0
+    tabuleiro[13] += 1
+    resultados.append(tabuleiro[:])
+    total_jogadas += tabuleiro[0]
 
 # Opções de Jogo
 def perguntar_reiniciar():
@@ -533,32 +671,37 @@ def jogar_multiplas_partidas(modo_jogo, num_partidas): # <====================
     global total_jogadas, tempo_inicio, escolha
     total_jogadas = 0
     tempo_inicio = time.time()
+    escolha = None
 
-    if not modo_jogo == jogo_aleatorio_vs_aleatorio:
-        print("Quem começa primeiro Campeão/Inteligente ou Aleatório?")
-        escolha = input("1 - Campeão/Inteligente ou 2 - Aleatório: ")
+    if not modo_jogo == jogo_aleatorio_vs_aleatorio and not modo_jogo == jogo_campeao_vs_campeao and not modo_jogo == jogo_inteligente_vs_inteligente:
+        print(f"Quem começa primeiro {jogadores[0]} ou {jogadores[1]}?")
+        escolha = input(f"1 - {jogadores[0]} ou 2 - {jogadores[1]}: ")
         while escolha not in ["1", "2"]:
-            escolha = input("Opção inválida: 1 - Campeão/Inteligente ou 2 - Aleatório: ")
+            print("Opção inválida! Escolha novamente:")
+            escolha = input(f"1 - {jogadores[0]} ou 2 - {jogadores[1]}: ")
 
     for _ in range(num_partidas):
         modo_jogo()
     exibir_estatisticas_finais()
+    perguntar_reiniciar()
 
 def menu_principal():
+    global jogadores
+
     print("\nEscolha uma opção:")
     print("1 - Jogador Humano vs Jogador Aleatório")
     print("2 - Jogador Humano vs Jogador Campeão")
     print("3 - Jogador Humano vs Jogador Inteligente")
     print("4 - Jogador Aleatório vs Jogador Aleatório (múltiplas partidas)")
     print("5 - Jogador Campeão vs Jogador Campeão (múltiplas partidas)")
-    # print("6 - Jogador Inteligente vs Jogador Inteligente (múltiplas partidas)")
+    print("6 - Jogador Inteligente vs Jogador Inteligente (múltiplas partidas)")
     print("7 - Jogador Campeão vs Jogador Aleatório (múltiplas partidas)")
     print("8 - Jogador Inteligente vs Jogador Aleatório (múltiplas partidas)")
-    # print("9 - Jogador Inteligente vs Jogador Campeão (múltiplas partidas)")
+    print("9 - Jogador Inteligente vs Jogador Campeão (múltiplas partidas)")
     print("0 - Exibir base de conhecimento IA")
     print("(Escolha qualquer outro número para encerrar o jogo)")
 
-    escolha = input("Digite: ")
+    escolha = input("Escolha: ")
 
     if escolha == "1":
         jogo_humano_vs_aleatorio()
@@ -572,18 +715,21 @@ def menu_principal():
     elif escolha == "5":
         num_partidas = int(input("Quantas partidas deseja jogar? "))
         jogar_multiplas_partidas(jogo_campeao_vs_campeao, num_partidas)
-    # elif escolha == "6":
-    #     num_partidas = int(input("Quantas partidas deseja jogar? "))
-    #     jogar_multiplas_partidas(jogo_inteligente_vs_inteligente, num_partidas)
+    elif escolha == "6":
+        num_partidas = int(input("Quantas partidas deseja jogar? "))
+        jogar_multiplas_partidas(jogo_inteligente_vs_inteligente, num_partidas)
     elif escolha == "7":
+        jogadores = ["Campeão", "Aleatório"]
         num_partidas = int(input("Quantas partidas deseja jogar? "))
         jogar_multiplas_partidas(jogo_campeao_vs_aleatorio, num_partidas)
     elif escolha == "8":
+        jogadores = ["Inteligente", "Aleatório"]
         num_partidas = int(input("Quantas partidas deseja jogar? "))
         jogar_multiplas_partidas(jogo_inteligente_vs_aleatorio, num_partidas)
-    # elif escolha == "9":
-    #     num_partidas = int(input("Quantas partidas deseja jogar? "))
-    #     jogar_multiplas_partidas(jogo_inteligente_vs_campeao, num_partidas)
+    elif escolha == "9":
+        jogadores = ["Inteligente", "Campeão"]
+        num_partidas = int(input("Quantas partidas deseja jogar? "))
+        jogar_multiplas_partidas(jogo_inteligente_vs_campeao, num_partidas)
     elif escolha == "0":
         exibir_conhecimento_ia()
     else:
@@ -591,10 +737,11 @@ def menu_principal():
         exit()
 
 def iniciar_jogo():
-    global tabuleiro, resultados, total_jogadas, jogadas_inteligentes, conhecimento_ia
+    global tabuleiro, resultados, total_jogadas, jogadas_inteligentes, conhecimento_ia, jogadores
     tabuleiro = [0] * 15
     resultados = []
     total_jogadas = 0
+    jogadores = []
     jogadas_inteligentes = []
     conhecimento_ia = []
     
