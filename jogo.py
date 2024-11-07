@@ -246,7 +246,7 @@ def jogada_inteligente(jogador):
     maior_pontuacao = -float('inf') # float('inf') ou -2**31
     jogadas_validas = []
     jogada_ia = None
-
+    
     if (modo_jogado == jogo_inteligente_vs_inteligente):
         jogadas_jogador = jogadas_inteligentes if jogador == "X" else jogadas_inteligentes2
     else:
@@ -322,12 +322,14 @@ def jogo_humano_vs_aleatorio():
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
-            if vencedor == "X":
+            if tabuleiro[11] == 1:
                 tabuleiro[12] += 1
-                print(f"Vitória do Jogador 1!")
             else:
                 tabuleiro[14] += 1
-                print(f"Vitória do Jogador 2!")
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                print(f"Vitória do Jogador Humano!")
+            else:
+                print(f"Vitória do Jogador Aleatório!")
             resultados.append(tabuleiro[:])
             return perguntar_reiniciar()
     tabuleiro[11] = 0
@@ -358,12 +360,14 @@ def jogo_humano_vs_campeao():
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
-            if vencedor == "X":
+            if tabuleiro[11] == 1:
                 tabuleiro[12] += 1
-                print(f"Vitória do Jogador 1!")
             else:
                 tabuleiro[14] += 1
-                print(f"Vitória do Jogador 2!")
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                print(f"Vitória do Jogador Humano!")
+            else:
+                print(f"Vitória do Jogador Campeão!")
             resultados.append(tabuleiro[:])
             return perguntar_reiniciar()
     tabuleiro[11] = 0
@@ -396,14 +400,16 @@ def jogo_humano_vs_inteligente():
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
-            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+            if tabuleiro[11] == 1:
                 tabuleiro[12] += 1
-                pontuar_jogada_inteligente(adversario, derrota)
-                print(f"Vitória do Jogador 1!")
             else:
                 tabuleiro[14] += 1
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                pontuar_jogada_inteligente(adversario, derrota)
+                print(f"Vitória do Jogador Humano!")
+            else:
                 pontuar_jogada_inteligente(jogador, vitoria)
-                print(f"Vitória do Jogador 2!")
+                print(f"Vitória do Jogador Inteligente!")
             resultados.append(tabuleiro[:])
             return perguntar_reiniciar()
     tabuleiro[11] = 0
@@ -525,12 +531,14 @@ def jogo_inteligente_vs_aleatorio():
             jogada_aleatorio(jogador)
         vencedor = verificar_vitoria()
         if vencedor:
-            tabuleiro[11] = 1 if vencedor == "X" else -1
-            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+            tabuleiro[11] = 1 if vencedor == "X" else -1.
+            if tabuleiro[11] == 1:
                 tabuleiro[12] += 1
-                pontuar_jogada_inteligente(jogador, vitoria)
             else:
                 tabuleiro[14] += 1
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                pontuar_jogada_inteligente(vencedor, vitoria)
+            else:
                 pontuar_jogada_inteligente(adversario, derrota)
             resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
@@ -556,11 +564,13 @@ def jogo_inteligente_vs_campeao():
         vencedor = verificar_vitoria()
         if vencedor:
             tabuleiro[11] = 1 if vencedor == "X" else -1
-            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+            if tabuleiro[11] == 1:
                 tabuleiro[12] += 1
-                pontuar_jogada_inteligente(jogador, vitoria)
             else:
                 tabuleiro[14] += 1
+            if (vencedor == "X" and escolha == "1") or (vencedor == "O" and escolha == "2"):
+                pontuar_jogada_inteligente(vencedor, vitoria)
+            else:
                 pontuar_jogada_inteligente(adversario, derrota)
             resultados.append(tabuleiro[:])
             total_jogadas += tabuleiro[0]
@@ -588,7 +598,7 @@ def perguntar_reiniciar():
         print("Jogo encerrado. Obrigado por jogar!")
         exit()
 
-def jogar_multiplas_partidas(modo_jogo, num_partidas): # <====================
+def jogar_multiplas_partidas(modo_jogo, num_partidas):
     global total_jogadas, tempo_inicio, escolha, modo_jogado
     modo_jogado = modo_jogo
     total_jogadas = 0
