@@ -11,6 +11,9 @@ Instalação AV2:
 - Instale os pacotes python necessários (recomendado instalar em uma env);
   Caso use env.
   - No powershell e bash: pyhton -m venv myenv (myenv é o nome da env, pode-se usar o nome que quiser);
+    - Caso o comando abaixo não funcione, posse ser uma questão de permissão (pode ser necessário rodar este comando toda vez que se inicar o projeto):
+      - Rode o seguinte comando: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+      - ou: Set-ExecutionPolicy RemoteSigned ;
   - para ativar env: .\myenv\Scripts\activate ;
   - para desativar env: .\myenv\Scripts\deactivate.bat ;
 - Instale Ultralytics (para treinamento de modelo): pip install ultralytics ;
