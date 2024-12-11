@@ -1,0 +1,21 @@
+{
+  "categories": [
+    {
+      "id": 0,
+      "name": "coptotermes gestroi"
+    },
+    {
+      "id": 1,
+      "name": "cryptotermes brevis"
+    },
+    {
+      "id": 2,
+      "name": "nasutitermes corniger"
+    }
+  ],
+  "info": {
+    "year": 2024,
+    "version": "1.0",
+    "contributor": "Label Studio"
+  }
+}

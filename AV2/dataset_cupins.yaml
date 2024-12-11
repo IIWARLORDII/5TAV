@@ -1,0 +1,6 @@
+train: E:\5TAV\5TAV\AV2\train
+val: E:\5TAV\5TAV\AV2\val
+
+nc: 3
+
+names: ['coptotermes gestroi', 'cryptotermes brevis', 'nasutitermes corniger']
