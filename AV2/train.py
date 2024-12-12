@@ -3,12 +3,8 @@ from ultralytics import YOLO
 model = YOLO('yolo11m.pt')
 
 model.train(data = 'dataset_cupins.yaml', 
-            imgsz = 640, 
+            imgsz = 1024, 
             batch = 16, 
-            epochs = 100,
-            lr0=0.001,
-            augment=True,
-            workers = 4,
-            verbose = True,
-            show_conf = False, 
+            epochs = 200,
+            workers = 0,
             device = 0)
